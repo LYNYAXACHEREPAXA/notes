@@ -2,6 +2,18 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 import json
 
+#---------------Структура для зберігання заміток в json файл--------------
+notes = {
+    "Ласкаво просимо!":  {
+        "text": "Це найкращий додаток для заміток у світі!",
+        "tag": ["добро", "інструкція"]  }
+}
+
+def writeToFile(): #функція для запису в файл
+    with open("notes_data.json", "w") as file:  #записуємо структуру сортовано
+        json.dump(notes, file, sort_keys = True)
+
+
 # ------------------------- Вікно програми ---------------------------
 app = QApplication([])
 window  = QWidget()
@@ -94,6 +106,54 @@ col2.addWidget(action_theme_btn)
 layout_note = QHBoxLayout()
 layout_note.addLayout(col1)
 layout_note.addLayout(col2)
+
+#--------------------------------Функціонал програми-------------------------------
+
+#                        ________фуннції для заміток__________
+    # отримуємо текст замітки з виділеною назвою та відображаємо його в полі редагування
+def show_notes():
+    global key
+    key = list_widget1.selectedItems() [0].text() # дізнаємось на яку записку клікнули
+    list_widget2.clear()                          # очищаємо поле з тегами
+    text_editor.setText(notes[key]["text"])       # відобразили текст замітки
+    list_widget2.addItems(notes[key]["tag"])      # відобразили теги замтки
+
+# додаємо нову замітку
+def add_notes():
+    note_name, ok = QInputDialog.getText(window, "Додати замітку", "Назва замітки")
+    if note_name and ok:
+        list_widget1.addItem(note_name)
+        notes[note_name] = {"text":"","tag":[]}
+    writeToFile()
+
+#видаляємо вибрану замітку
+def delete_notes():
+    if list_widget1.setCurrentItem():             # якщо вибрана замітка
+        if key in notes:                          # і є така в словнику notes
+            notes.pop(key)                        # pop видаляє зі словника
+
+            text_editor.clear()                   # очищаємо віджети
+            list_widget1.clear() 
+            list_widget2.clear()
+            list_widget1.addItems(notes)          # оновлюємо віджет і список заміток
+            writeToFile()                         # перезаписуємо файл
+
+# зберігаємо замітку
+def save_notes():
+    if list_widget1.currentItem():                # якщо вибрана замітка
+        key = list_widget1.currentItem().text()   # отримати назву вибраної замітки
+        notes[key]['text'] = text_editor.toPlainText() # записати у словник notes з текстом
+        writeToFile()
+
+#             ____________________Функції для тегів_____________________ 
+'''Запуск програми'''
+                                                  # підключення обробки подій
+list_widget1.itemClicked.connect(show_notes)
+
+
+with open("notes_data.json", "r") as file:
+    notes = json.load(file)
+list_widget1.addItems(notes)
 
 # макет на екран
 window.setLayout(layout_note)
